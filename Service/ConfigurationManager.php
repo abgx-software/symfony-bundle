@@ -64,6 +64,6 @@ final class ConfigurationManager
 
     public function getNames(): array
     {
-        return \array_keys($this->configuration);
+        return array_keys($this->configuration);
     }
 }

@@ -16,9 +16,9 @@ use Symfony\Component\DependencyInjection\Alias;
 use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\HttpKernel\Kernel;
 use Translation\Bundle\EventListener\AutoAddMissingTranslations;
 use Translation\Bundle\EventListener\EditInPlaceResponseListener;
@@ -37,9 +37,6 @@ use Translation\Extractor\Visitor\Php\Symfony\FormTypeChoices;
  */
 class TranslationExtension extends Extension
 {
-    /**
-     * {@inheritdoc}
-     */
     public function load(array $configs, ContainerBuilder $container): void
     {
         $container->setParameter('extractor_vendor_dir', $this->getExtractorVendorDirectory());
@@ -47,9 +44,12 @@ class TranslationExtension extends Extension
         $configuration = new Configuration($container);
         $config = $this->processConfiguration($configuration, $configs);
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+        $legacyLoader = new Loader\PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config/legacy'));
 
         $loader->load('services.yaml');
+        $legacyLoader->load('services.php');
         $loader->load('extractors.yaml');
+        $legacyLoader->load('extractors.php');
 
         // Add major version to extractor
         $container->getDefinition(FormTypeChoices::class)
@@ -74,6 +74,7 @@ class TranslationExtension extends Extension
 
         if ($config['edit_in_place']['enabled']) {
             $loader->load('edit_in_place.yaml');
+            $legacyLoader->load('edit_in_place.php');
             $this->enableEditInPlace($container, $config);
         }
 
@@ -89,6 +90,7 @@ class TranslationExtension extends Extension
         }
 
         $loader->load('console.yaml');
+        $legacyLoader->load('console.php');
     }
 
     /**
@@ -169,7 +171,7 @@ class TranslationExtension extends Extension
             $path = $container->getParameter('kernel.project_dir');
         }
 
-        $container->setParameter('php_translation.webui.file_base_path', \rtrim($path, '/').'/');
+        $container->setParameter('php_translation.webui.file_base_path', rtrim($path, '/').'/');
     }
 
     /**
@@ -219,17 +221,11 @@ class TranslationExtension extends Extension
         $container->setParameter('php_translation.translator_service.api_key', $config['fallback_translation']['api_key']);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getAlias(): string
     {
         return 'translation';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getConfiguration(array $config, ContainerBuilder $container): Configuration
     {
         return new Configuration($container);

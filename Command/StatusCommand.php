@@ -11,6 +11,7 @@
 
 namespace Translation\Bundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -24,11 +25,12 @@ use Translation\Bundle\Service\ConfigurationManager;
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand(
+    name: 'translation:status'
+)]
 class StatusCommand extends Command
 {
     use BundleTrait;
-
-    protected static $defaultName = 'translation:status';
 
     /**
      * @var CatalogueCounter
@@ -48,7 +50,7 @@ class StatusCommand extends Command
     public function __construct(
         CatalogueCounter $catalogueCounter,
         ConfigurationManager $configurationManager,
-        CatalogueFetcher $catalogueFetcher
+        CatalogueFetcher $catalogueFetcher,
     ) {
         $this->catalogueCounter = $catalogueCounter;
         $this->configurationManager = $configurationManager;
@@ -60,7 +62,6 @@ class StatusCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName(self::$defaultName)
             ->setDescription('Show status about your translations.')
             ->addArgument('configuration', InputArgument::OPTIONAL, 'The configuration to use', 'default')
             ->addArgument('locale', InputArgument::OPTIONAL, 'The locale to use. If omitted, we use all configured locales.', false)
@@ -89,7 +90,7 @@ class StatusCommand extends Command
         }
 
         if ($input->getOption('json')) {
-            $output->writeln(\json_encode($stats));
+            $output->writeln(json_encode($stats));
 
             return 0;
         }

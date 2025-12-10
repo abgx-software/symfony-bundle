@@ -11,8 +11,10 @@
 
 namespace Translation\Bundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -26,12 +28,13 @@ use Translation\Bundle\Service\StorageManager;
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand(
+    name: 'translation:delete-obsolete'
+)]
 class DeleteObsoleteCommand extends Command
 {
     use BundleTrait;
     use StorageTrait;
-
-    protected static $defaultName = 'translation:delete-obsolete';
 
     /**
      * @var ConfigurationManager
@@ -52,7 +55,7 @@ class DeleteObsoleteCommand extends Command
         StorageManager $storageManager,
         ConfigurationManager $configurationManager,
         CatalogueManager $catalogueManager,
-        CatalogueFetcher $catalogueFetcher
+        CatalogueFetcher $catalogueFetcher,
     ) {
         $this->storageManager = $storageManager;
         $this->configurationManager = $configurationManager;
@@ -64,7 +67,6 @@ class DeleteObsoleteCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName(self::$defaultName)
             ->setDescription('Delete all translations marked as obsolete.')
             ->addArgument('configuration', InputArgument::OPTIONAL, 'The configuration to use', 'default')
             ->addArgument('locale', InputArgument::OPTIONAL, 'The locale to use. If omitted, we use all configured locales.', null)
@@ -96,6 +98,7 @@ class DeleteObsoleteCommand extends Command
         }
 
         if ($input->isInteractive()) {
+            /** @var QuestionHelper $helper */
             $helper = $this->getHelper('question');
             $question = new ConfirmationQuestion(\sprintf('You are about to remove %d translations. Do you wish to continue? (y/N) ', $messageCount), false);
             if (!$helper->ask($input, $output, $question)) {

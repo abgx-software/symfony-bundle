@@ -11,6 +11,7 @@
 
 namespace Translation\Bundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,12 +27,13 @@ use Translation\Bundle\Service\StorageManager;
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  */
+#[AsCommand(
+    name: 'translation:download'
+)]
 class DownloadCommand extends Command
 {
     use BundleTrait;
     use StorageTrait;
-
-    protected static $defaultName = 'translation:download';
 
     private $configurationManager;
     private $cacheCleaner;
@@ -41,7 +43,7 @@ class DownloadCommand extends Command
         StorageManager $storageManager,
         ConfigurationManager $configurationManager,
         CacheClearer $cacheCleaner,
-        CatalogueWriter $catalogueWriter
+        CatalogueWriter $catalogueWriter,
     ) {
         $this->storageManager = $storageManager;
         $this->configurationManager = $configurationManager;
@@ -54,7 +56,6 @@ class DownloadCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName(self::$defaultName)
             ->setDescription('Replace local messages with messages from remote')
             ->setHelp(<<<EOT
 The <info>%command.name%</info> will erase all your local translations and replace them with translations downloaded from the remote.
@@ -75,7 +76,7 @@ EOT
             $message = 'The --cache option is deprecated as it\'s now the default behaviour of this command.';
 
             $io->note($message);
-            @\trigger_error($message, E_USER_DEPRECATED);
+            @trigger_error($message, \E_USER_DEPRECATED);
         }
 
         $configName = $input->getArgument('configuration');
@@ -117,19 +118,19 @@ EOT
      */
     private function hashDirectory(string $directory)
     {
-        if (!\is_dir($directory)) {
+        if (!is_dir($directory)) {
             return false;
         }
 
         $finder = new Finder();
         $finder->files()->in($directory)->notName('/~$/')->sortByName();
 
-        $hash = \hash_init('md5');
+        $hash = hash_init('md5');
         foreach ($finder as $file) {
-            \hash_update_file($hash, $file->getRealPath());
+            hash_update_file($hash, $file->getRealPath());
         }
 
-        return \hash_final($hash);
+        return hash_final($hash);
     }
 
     public function cleanParameters(array $raw)
@@ -138,7 +139,7 @@ EOT
 
         foreach ($raw as $string) {
             // Assert $string looks like "foo:bar"
-            list($key, $value) = \explode(':', $string, 2);
+            [$key, $value] = explode(':', $string, 2);
             $config[$key][] = $value;
         }
 

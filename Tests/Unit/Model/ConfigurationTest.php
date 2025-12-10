@@ -24,7 +24,7 @@ class ConfigurationTest extends TestCase
         foreach ($key2Function as $key => $value) {
             $func = $value;
             if (\is_array($func)) {
-                $func = \reset($func);
+                $func = reset($func);
             }
             $this->assertEquals($value, $conf->$func());
         }
@@ -56,6 +56,7 @@ class ConfigurationTest extends TestCase
             'blacklist_domains' => ['getBlacklistDomains'],
             'whitelist_domains' => ['getWhitelistDomains'],
             'xliff_version' => 'getXliffVersion',
+            'new_message_format' => 'getNewMessageFormat',
         ];
     }
 }

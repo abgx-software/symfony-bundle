@@ -21,9 +21,10 @@ class SyncCommandTest extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->kernel->addConfigFile(__DIR__.'/../app/config/normal_config.yaml');
 
-        \file_put_contents(__DIR__.'/../app/Resources/translations/messages.sv.xlf', <<<'XML'
+        $this->testKernel->addTestConfig(__DIR__.'/../app/config/normal_config.yaml');
+
+        file_put_contents(__DIR__.'/../app/Resources/translations/messages.sv.xlf', <<<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:2.0" version="2.0" srcLang="fr-FR" trgLang="en-US">
     <file id="messages.en_US">
@@ -63,10 +64,10 @@ XML
 
     public function testExecute(): void
     {
-        $this->bootKernel();
-        $application = new Application($this->kernel);
+        $this->testKernel->boot();
+        $application = new Application($this->testKernel);
 
-        $container = $this->getContainer();
+        $container = $this->testKernel->getContainer();
         $application->add($container->get(SyncCommand::class));
 
         $command = $application->find('translation:sync');
@@ -80,8 +81,8 @@ XML
 
             $this->fail('The command should fail when called with an unknown configuration key.');
         } catch (\InvalidArgumentException $e) {
-            $this->assertRegExp('|Unknown storage "fail"\.|s', $e->getMessage());
-            $this->assertRegExp('|Available storages are "app"|s', $e->getMessage());
+            $this->assertMatchesRegularExpression('|Unknown storage "fail"\.|s', $e->getMessage());
+            $this->assertMatchesRegularExpression('|Available storages are "app"|s', $e->getMessage());
         }
     }
 }

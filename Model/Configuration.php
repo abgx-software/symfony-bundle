@@ -93,6 +93,11 @@ final class Configuration
     private $xliffVersion;
 
     /**
+     * @var string
+     */
+    private $newMessageFormat;
+
+    /**
      * @var array
      */
     private $defaultTranslationValue;
@@ -111,6 +116,7 @@ final class Configuration
         $this->blacklistDomains = $data['blacklist_domains'];
         $this->whitelistDomains = $data['whitelist_domains'];
         $this->xliffVersion = $data['xliff_version'];
+        $this->newMessageFormat = $data['new_message_format'];
         $this->defaultTranslationValue = $data['default_translation_value'];
     }
 
@@ -175,12 +181,21 @@ final class Configuration
      */
     public function getPathsToTranslationFiles(): array
     {
-        return \array_merge($this->externalTranslationsDirs, [$this->getOutputDir()]);
+        return array_merge($this->externalTranslationsDirs, [$this->getOutputDir()]);
     }
 
     public function getXliffVersion(): string
     {
         return $this->xliffVersion;
+    }
+
+    /**
+     * If set to "icu" it'll place all new translations in "{domain}+intl-icu.{locale}.{ext}" file.
+     * Otherwise normal "{domain}.{locale}.{ext}" file will be used.
+     */
+    public function getNewMessageFormat(): string
+    {
+        return $this->newMessageFormat;
     }
 
     public function getDefaultTranslationValue(): array
