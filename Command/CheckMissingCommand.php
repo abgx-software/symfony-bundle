@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Translation\Bundle\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -17,10 +18,11 @@ use Translation\Bundle\Model\Configuration;
 use Translation\Bundle\Service\ConfigurationManager;
 use Translation\Bundle\Service\Importer;
 
+#[AsCommand(
+    name: 'translation:check-missing'
+)]
 final class CheckMissingCommand extends Command
 {
-    protected static $defaultName = 'translation:check-missing';
-
     /**
      * @var ConfigurationManager
      */
@@ -45,7 +47,7 @@ final class CheckMissingCommand extends Command
         ConfigurationManager $configurationManager,
         CatalogueFetcher $catalogueFetcher,
         Importer $importer,
-        CatalogueCounter $catalogueCounter
+        CatalogueCounter $catalogueCounter,
     ) {
         parent::__construct();
 
@@ -58,7 +60,6 @@ final class CheckMissingCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName(self::$defaultName)
             ->setDescription('Check that all translations for a given locale are extracted.')
             ->addArgument('locale', InputArgument::REQUIRED, 'The locale to check')
             ->addArgument('configuration', InputArgument::OPTIONAL, 'The configuration to use', 'default');
@@ -80,6 +81,7 @@ final class CheckMissingCommand extends Command
                 'blacklist_domains' => $config->getBlacklistDomains(),
                 'whitelist_domains' => $config->getWhitelistDomains(),
                 'project_root' => $config->getProjectRoot(),
+                'new_message_format' => $config->getNewMessageFormat(),
             ]
         );
 
@@ -132,9 +134,9 @@ final class CheckMissingCommand extends Command
         $total = 0;
 
         foreach ($catalogue->getDomains() as $domain) {
-            $emptyTranslations = \array_filter(
+            $emptyTranslations = array_filter(
                 $catalogue->all($domain),
-                function (string $message = null): bool {
+                function (?string $message = null): bool {
                     return null === $message || '' === $message;
                 }
             );

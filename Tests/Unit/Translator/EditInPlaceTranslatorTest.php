@@ -27,7 +27,7 @@ final class EditInPlaceTranslatorTest extends TestCase
 {
     public function testWithNotLocaleAwareTranslator()
     {
-        if (!\interface_exists(NewTranslatorInterface::class)) {
+        if (!interface_exists(NewTranslatorInterface::class)) {
             $this->markTestSkipped('Relevant only when NewTranslatorInterface is available.');
         }
 
@@ -69,9 +69,7 @@ final class EditInPlaceTranslatorTest extends TestCase
         $activator = new FakeActivator(false);
         $service = new EditInPlaceTranslator($symfonyTranslator, $activator, $requestStack);
 
-        $this->assertNull(
-            $service->trans('key', [])
-        );
+        $this->assertEmpty($service->trans('key', []));
     }
 
     public function testHtmlTranslation(): void
@@ -115,7 +113,7 @@ class FakeActivator implements ActivatorInterface
         $this->enabled = $enabled;
     }
 
-    public function checkRequest(Request $request = null): bool
+    public function checkRequest(?Request $request = null): bool
     {
         return $this->enabled;
     }

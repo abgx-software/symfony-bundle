@@ -46,15 +46,15 @@ final class CatalogueFetcher
         foreach ($locales as $locale) {
             $currentCatalogue = new MessageCatalogue($locale);
             foreach ($dirs as $path) {
-                if (\is_dir($path)) {
+                if (is_dir($path)) {
                     $this->reader->read($path, $currentCatalogue);
                 }
             }
 
             foreach ($currentCatalogue->getDomains() as $domain) {
                 if (!$this->isValidDomain($config, $domain)) {
-                    $messages = $currentCatalogue->all();
-                    unset($messages[$domain]);
+                    $messages = NSA::getProperty($currentCatalogue, 'messages');
+                    unset($messages[$domain], $messages[$domain.'+intl-icu' /* MessageCatalogueInterface::INTL_DOMAIN_SUFFIX */]);
                     NSA::setProperty($currentCatalogue, 'messages', $messages);
                 }
             }

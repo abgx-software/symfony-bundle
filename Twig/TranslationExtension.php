@@ -78,27 +78,17 @@ final class TranslationExtension extends AbstractExtension
         }
 
         if (false === $this->translator->getCatalogue($locale)->defines($message, $domain)) {
-            return $this->translator->transChoice($defaultMessage, $count, \array_merge(['%count%' => $count], $arguments), $domain, $locale);
+            return $this->translator->transChoice($defaultMessage, $count, array_merge(['%count%' => $count], $arguments), $domain, $locale);
         }
 
-        return $this->translator->transChoice($message, $count, \array_merge(['%count%' => $count], $arguments), $domain, $locale);
+        return $this->translator->transChoice($message, $count, array_merge(['%count%' => $count], $arguments), $domain, $locale);
     }
 
-    /**
-     * @param mixed $v
-     *
-     * @return mixed
-     */
     public function desc($v)
     {
         return $v;
     }
 
-    /**
-     * @param mixed $v
-     *
-     * @return mixed
-     */
     public function meaning($v)
     {
         return $v;

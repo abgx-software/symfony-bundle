@@ -18,8 +18,11 @@ use Twig\Node\Expression\Binary\EqualBinary;
 use Twig\Node\Expression\ConditionalExpression;
 use Twig\Node\Expression\ConstantExpression;
 use Twig\Node\Expression\FilterExpression;
+use Twig\Node\Expression\Ternary\ConditionalTernary;
 use Twig\Node\Node;
-use Twig\NodeVisitor\AbstractNodeVisitor;
+use Twig\Node\Nodes;
+use Twig\NodeVisitor\NodeVisitorInterface;
+use Twig\TwigFilter;
 
 /**
  * Applies the value of the "desc" filter if the "trans" filter has no
@@ -29,19 +32,16 @@ use Twig\NodeVisitor\AbstractNodeVisitor;
  *
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-final class DefaultApplyingNodeVisitor extends AbstractNodeVisitor
+final class DefaultApplyingNodeVisitor implements NodeVisitorInterface
 {
-    /**
-     * @var bool
-     */
-    private $enabled = true;
+    private bool $enabled = true;
 
     public function setEnabled(bool $bool): void
     {
         $this->enabled = $bool;
     }
 
-    public function doEnterNode(Node $node, Environment $env): Node
+    public function enterNode(Node $node, Environment $env): Node
     {
         if (!$this->enabled) {
             return $node;
@@ -59,7 +59,7 @@ final class DefaultApplyingNodeVisitor extends AbstractNodeVisitor
         }
 
         if (!$transNode instanceof FilterExpression) {
-            throw new \RuntimeException(\sprintf('The "desc" filter must be applied after a "trans", or "transchoice" filter.'));
+            throw new \RuntimeException('The "desc" filter must be applied after a "trans", or "transchoice" filter.');
         }
 
         $wrappingNode = $node->getNode('node');
@@ -93,28 +93,50 @@ final class DefaultApplyingNodeVisitor extends AbstractNodeVisitor
             $testNode->getNode('arguments')->setNode(0, new ArrayExpression([], $lineno));
 
             // wrap the default node in a |replace filter
-            $defaultNode = new FilterExpression(
-                clone $node->getNode('arguments')->getNode(0),
-                new ConstantExpression('replace', $lineno),
-                new Node([
-                    clone $wrappingNode->getNode('arguments')->getNode(0),
-                ]),
-                $lineno
+            if (Environment::VERSION_ID >= 31500) {
+                $defaultNode = new FilterExpression(
+                    clone $node->getNode('arguments')->getNode(0),
+                    new TwigFilter('replace'),
+                    new Nodes([
+                        clone $wrappingNode->getNode('arguments')->getNode(0),
+                    ]),
+                    $lineno
+                );
+            } else {
+                $defaultNode = new FilterExpression(
+                    clone $node->getNode('arguments')->getNode(0),
+                    new ConstantExpression('replace', $lineno),
+                    new Node([
+                        clone $wrappingNode->getNode('arguments')->getNode(0),
+                    ]),
+                    $lineno
+                );
+            }
+        }
+
+        $expr = new EqualBinary($testNode, $transNode->getNode('node'), $wrappingNode->getTemplateLine());
+        if (Environment::VERSION_ID >= 31700) {
+            $condition = new ConditionalTernary(
+                $expr,
+                $defaultNode,
+                clone $wrappingNode,
+                $wrappingNode->getTemplateLine()
+            );
+        } else {
+            $condition = new ConditionalExpression(
+                $expr,
+                $defaultNode,
+                clone $wrappingNode,
+                $wrappingNode->getTemplateLine()
             );
         }
 
-        $condition = new ConditionalExpression(
-            new EqualBinary($testNode, $transNode->getNode('node'), $wrappingNode->getTemplateLine()),
-            $defaultNode,
-            clone $wrappingNode,
-            $wrappingNode->getTemplateLine()
-        );
         $node->setNode('node', $condition);
 
         return $node;
     }
 
-    public function doLeaveNode(Node $node, Environment $env): Node
+    public function leaveNode(Node $node, Environment $env): Node
     {
         return $node;
     }

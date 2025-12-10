@@ -61,9 +61,6 @@ final class FallbackTranslator implements TranslatorInterface
         $this->defaultLocale = $defaultLocale;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function trans($id, array $parameters = [], $domain = null, $locale = null): string
     {
         $id = (string) $id;
@@ -87,9 +84,6 @@ final class FallbackTranslator implements TranslatorInterface
         return $this->translateWithSubstitutedParameters($orgString, $locale, $parameters);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function transChoice($id, $number, array $parameters = [], $domain = null, $locale = null): string
     {
         $id = (string) $id;
@@ -113,28 +107,28 @@ final class FallbackTranslator implements TranslatorInterface
         return $this->translateWithSubstitutedParameters($orgString, $locale, $parameters);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setLocale($locale): void
     {
         $this->symfonyTranslator->setLocale($locale);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getLocale(): string
     {
         return $this->symfonyTranslator->getLocale();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getCatalogue($locale = null): MessageCatalogueInterface
     {
         return $this->symfonyTranslator->getCatalogue($locale);
+    }
+
+    public function getCatalogues(): array
+    {
+        if (!method_exists($this->symfonyTranslator, 'getCatalogues')) {
+            throw new \Exception(\sprintf('%s method is not available! Please, upgrade to Symfony 6 in order to to use it', __METHOD__));
+        }
+
+        return $this->symfonyTranslator->getCatalogues();
     }
 
     /**
@@ -154,10 +148,10 @@ final class FallbackTranslator implements TranslatorInterface
         // Replace parameters
         $replacements = [];
         foreach ($parameters as $placeholder => $nonTranslatableValue) {
-            $replacements[(string) $nonTranslatableValue] = \sha1($placeholder);
+            $replacements[(string) $nonTranslatableValue] = sha1($placeholder);
         }
 
-        $replacedString = \str_replace(\array_keys($replacements), \array_values($replacements), $orgString);
+        $replacedString = str_replace(array_keys($replacements), array_values($replacements), $orgString);
         $translatedString = $this->externalTranslator->translate($replacedString, $this->defaultLocale, $locale);
 
         if (null === $translatedString) {
@@ -165,6 +159,6 @@ final class FallbackTranslator implements TranslatorInterface
             return $orgString;
         }
 
-        return \str_replace(\array_values($replacements), \array_keys($replacements), $translatedString);
+        return str_replace(array_values($replacements), array_keys($replacements), $translatedString);
     }
 }
